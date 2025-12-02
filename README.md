@@ -95,5 +95,3 @@ Common commands
 
 If you want me to add examples showing how to list all tables with a single SQL query or to insert these instructions into the top of `sqlpractice.ipynb`, tell me and I will make the change.
 
-To run this file follow this link:
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/swarrup17/InternSQL/blob/main/sqlpractice.ipynb)
