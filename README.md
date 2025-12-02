@@ -42,11 +42,15 @@ Notes & troubleshooting
 - Mixing connection types: prefer a single approach (either SQLAlchemy `engine` or `sqlite3`) across your notebook to avoid confusion.
 
 Why you're seeing plain-text pretty tables
-- `ipython-sql` chooses a formatter based on the environment. If `prettytable` is installed and used, results are rendered in that format. That is normal and not an error.
+- `ipython-sql` chooses a formatter based on what is available in the kernel environment. In this workspace the environment currently includes `prettytable`, so ipython-sql displays query results using a plain-text pretty table renderer. This is expected and not an error.
 
-Ways to get HTML DataFrame output (recommended)
+Options: keep prettytable or switch to HTML DataFrames
 
-1) Preferred — use `pandas.read_sql()` in a Python cell (no prettytable, guaranteed HTML rendering):
+You can choose between keeping the current plain-text rendering or switching to HTML DataFrame output (recommended for notebooks):
+
+- Keep `prettytable` (no change): run `%%sql SELECT ...` as you do now; results will appear as prettytable text blocks.
+
+- Use pandas for guaranteed HTML tables (recommended): run SQL from a Python cell and let Jupyter render the DataFrame as HTML. Example:
 
 ```python
 import sqlite3
@@ -54,25 +58,39 @@ import pandas as pd
 
 conn = sqlite3.connect('Cricket.db')
 df = pd.read_sql_query('SELECT * FROM Players;', conn)
-df  # Jupyter will render this as an HTML table
+df
 conn.close()
 ```
 
-2) Capture ipython-sql result and convert to pandas if supported:
+- Remove `prettytable` so ipython-sql will prefer richer renderers: uninstall it from your environment or remove it from `requirements.txt` and reinstall packages. Example:
+
+```powershell
+pip uninstall prettytable
+# or edit requirements.txt to remove the prettytable line, then
+pip install -r requirements.txt
+```
+
+After changing installed packages, restart the kernel (Kernel → Restart) to apply the new renderer behavior.
+
+Capturing `%sql` results into pandas
+
+If you prefer to keep using `%sql` but want to render results as HTML, some ipython-sql versions let you convert the result to a DataFrame:
 
 ```python
 res = %sql SELECT * FROM Players;
-# many ipython-sql versions expose a DataFrame conversion
 if hasattr(res, 'DataFrame'):
 	df = res.DataFrame()
 	df
 else:
-	print('Conversion to DataFrame not available; use pandas.read_sql_query instead.')
+	# fallback: use pandas.read_sql_query
+	import sqlite3, pandas as pd
+	conn = sqlite3.connect('Cricket.db')
+	df = pd.read_sql_query('SELECT * FROM Players;', conn)
+	df
+	conn.close()
 ```
 
-3) Remove or avoid installing `prettytable` in the kernel environment so ipython-sql will prefer richer renderers. To remove it from your dependencies, edit `requirements.txt` and remove the `prettytable` entry, then reinstall dependencies in your environment.
-
-4) Restart the kernel after changing installed packages so the new rendering behavior takes effect.
+If you want, I can update `requirements.txt` to remove `prettytable` and ensure `pandas` is listed, and/or add example cells to `sqlpractice.ipynb` that always show HTML DataFrame output.
 
 Common commands
 - Load the SQL extension:
