@@ -228,5 +228,42 @@ order by  bt.Sixes DESC limit 1;
 select concat(p.FirstName,' ',p.LastName) as name, sum(b.Sixes+b.Fours) as Boundaries
  from players p join battingstats as b on b.PlayerID=p.PlayerID group by name order by Boundaries desc;
  
---  
+--  add a performance category based on runs:
+-- 0-20?:poor,20-40: average,50-100:good,100+: excellent
+select b.PlayerID,concat(p.FirstName,' ',p.LastName) as full_name,b.Runs,b.StrikeRate,
+CASE
+  WHEN b.Runs<20 then 'poor'
+  when	b.Runs>=20 and b.Runs<40 then 'average'
+  when b.Runs>=40 and b.Runs<100 then 'good'
+  when b.Runs>=100 then 'excellent'
+  else null
+end as performance_category
+from players p join battingstats b on b.PlayerID=p.PlayerID order by b.Runs desc ;
+
+ -- add bowling category based on wickets
+ -- 0:poor, 1-2:decent 3-4 good 5+: excellent
+select b.PlayerID,concat(p.FirstName,' ',p.LastName) as full_name, b.Wickets,b.EconomyRate,
+case 
+   when b.Wickets=0 then 'poor'
+   when b.Wickets=1 or b.Wickets=2 then 'decent'
+   when b.Wickets=3 or b.Wickets=4 then 'good'
+   when b.Wickets>=5 then 'excellent'
+   else null
+end as bowling_performance
+from players p join bowlingstats b on b.PlayerID=p.PlayerID order by b.Wickets desc;
+
+-- show the oldest player
+select PlayerID,concat(FirstName,' ',LastName)as fullname,DOB from players where DOB= (
+select min(DOB) from players);
+
+--  show all rounders (runs>30 and wickets>1 )
+select p.PlayerID,concat(p.FirstName,' ',p.LastName)as full_name,
+p.Role,bt.Runs,bw.Wickets from players p join battingstats bt
+on bt.PlayerID=p.PlayerID 
+join bowlingstats bw on bw.PlayerID=p.PlayerID
+where p.Role='All-rounder' and bt.Runs>30 and bw.Wickets>1
+
+--   
+
+
  
