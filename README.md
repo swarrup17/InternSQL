@@ -124,38 +124,39 @@ Common commands
 ```sql
 %sql -x
 ```
-### 🌐 Running the Streamlit App (app.py)
-### 1. Start the Streamlit Server
-```
-streamlit run app.py
-```
-### 2. A browser tab will open automatically
-### 3. Use the sidebar menu to:
 
-- Select a table (Teams, Players, Matches, Batting Stats, Bowling Stats)
-
-- Choose Dashboard to see a summary
-
-- Perform CRUD operations on the selected table.
-### ⚠️ Notes
-- Initialize the database once using the app or Notebook.
-
-- Restart the kernel if database changes are not reflected.
-
-- Always use the same SQLite file (Cricket.db) across Notebook and app.
-
-- For best experience in Jupyter, use HTML tables by having pandas installed and prettytable removed.
 ### 🛠 Recommended Environment Setup
 - Python 3.10+
-- Packages in requirements.txt:
+- Packages in `requirements.txt:`
 
 `
-streamlit
 pandas
+`
+`
 ipython-sql
+`
+`
 sqlalchemy
+`
+`
 sqlite3
 `
+# Migrated From sqlite to PostegreSql
+- DB settings:
+
+`
+sqlite_url:///your_sqlitedb_name.db
+`
+
+`
+pg_url="postgresql+psycopg2://postgres:your_postgresql_passqord@localhost:5432/postgresql_db_name"
+`
+
+`
+def migrate():
+`
+This function migrates the content of sqlite to postgresql where required information are edited
+
 # Optional: remove prettytable if you want HTML DataFrames
 
 If you want me to add examples showing how to list all tables with a single SQL query or to insert these instructions into the top of `sqlpractice.ipynb`, tell me and I will make the change.
