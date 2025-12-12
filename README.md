@@ -7,8 +7,8 @@ A small workspace demonstrating SQLite database usage with `ipython-sql` in Jupy
 ## 📂 Project Files
 
 - `sqlpractice.ipynb` — Jupyter Notebook with table definitions, sample inserts, and SQL queries using `%sql` / `%%sql`.
-- `app.py` — Streamlit application for managing the cricket database.
-- `requirements.txt` — Python dependencies for running both Jupyter and Streamlit.
+- `.env`- required environment to hide confidential information 
+- `requirements.txt` — Python dependencies for running both Jupyter and all  code
 
 ---
 
@@ -141,21 +141,119 @@ sqlalchemy
 `
 sqlite3
 `
-# Migrated From sqlite to PostegreSql
-- DB settings:
+`
+hashlib 
+`
+`
+python-dotenv
+`
+# Migrated From sqlite to PostegreSql and Validation using checksum
+# Load .env
+`
+load_dotenv("C:/Users/Swarup Dahal/Desktop/InternSQL/.env")
+`
+
+- Loads envirnment for database connection from .env file
 
 `
-sqlite_url:///your_sqlitedb_name.db
+MYSQL_CONN_STR = os.getenv("MYSQL_CONN_STR")
 `
 
 `
-pg_url="postgresql+psycopg2://postgres:your_postgresql_passqord@localhost:5432/postgresql_db_name"
+PG_CONN_STR = os.getenv("PG_CONN_STR")
 `
 
+- Connects to MySQL and PostgreSQL databases.
+
 `
+if not MYSQL_CONN_STR or not PG_CONN_STR: 
+   raise ValueError("Connection strings not loaded from .env.")
+`
+- checks for if connection between mysql and postgresql is created or not
+- if connection is not created then raise value erroe as connection  is not loaded dron .env 
+
+# Create engines
+```
+mysql_engine = create_engine(MYSQL_CONN_STR)
+pg_engine = create_engine(PG_CONN_STR)
+```
+# Migration Function
+
+```
 def migrate():
+   df = pd.read_sql(f"SELECT * FROM {table_name}", mysql_engine)
+   df.to_sql(table_name, pg_engine, if_exists="replace",   index=False)
+```
+
+
+Reads table from MySQL and writes it to PostgreSQL.
+
+`def validate(table_name: str) -> bool:
 `
-This function migrates the content of sqlite to postgresql where required information are edited
+This functions validates the if the data of mysql and postgresql matches or not.
+
+
+```
+checksum_mysql = hashlib.sha256()
+
+    for row in df_mysql.itertuples(index=False):
+        checksum_mysql.update(''.join(str(v) for v in row).encode())
+
+checksum_pg = hashlib.sha256()
+    for row in df_pg.itertuples(index=False):
+        checksum_pg.update(''.join(str(v) for v in row).encode())
+```
+- Computes checksums row-by-row for both databases.
+- Ensures even a single value mismatch is detected.
+
+# Display checksum values
+    mysql_checksum_value = checksum_mysql.hexdigest()
+    pg_checksum_value = checksum_pg.hexdigest()
+
+    print(f"MySQL checksum for {table_name}:{mysql_checksum_value}")
+    print(f"PostgreSQL checksum for {table_name}:{pg_checksum_value}")
+# Validates Using Checksum
+    if mysql_checksum_value == pg_checksum_value:
+        print(f"Validation PASSED for {table_name}: checksums match ")
+        return True
+    else:
+        print(f"Validation FAILED for {table_name}: checksums do not match ")
+        return False
+- Checks the checksum value for both mysql and postgre sql
+- Returns Validation Pass if Checksum Matches
+- Returns Validation Fail if Checksum does not matches
+# Main Function to read,migrate and validate tables
+```
+def main():
+    tables = ["Teams", "Players", "Matches","BattingStats","BowlingStats"]  # add more tables as needed
+    start_total = time.time()
+
+    for table in tables:
+        t_migrate = time.time()
+        migrate_table(table)
+        print(f"Time taken to migrate {table}: {time.time() - t_migrate:.4f} sec")
+
+        t_validate = time.time()
+        validate(table)
+        print(f"Time taken to validate {table}: {time.time() - t_validate:.4f} sec")
+
+    print(f"\nTotal time for all tables: {time.time() - start_total:.4f} sec")
+
+if __name__ == "__main__":
+    main()
+```
+# Example of migration and validation output
+```
+Starting migration for table: Teams
+Finished migrating table: Teams (13 rows)
+Time taken to migrate Teams: 0.1030 sec
+
+Validating table: Teams
+MySQL checksum for Teams:       dbed528c738e0f3880b08cb51fdd3112245bac776fbbb5207afe18336acb1a2a
+PostgreSQL checksum for Teams:  dbed528c738e0f3880b08cb51fdd3112245bac776fbbb5207afe18336acb1a2a
+Validation PASSED for Teams: checksums match 
+Time taken to validate Teams: 0.0092 sec
+```
 
 # Optional: remove prettytable if you want HTML DataFrames
 
